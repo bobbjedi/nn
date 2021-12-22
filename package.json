@@ -1,0 +1,41 @@
+{
+  "name": "time-series-forecasting-tensorflowjs",
+  "version": "1.0.0",
+  "description": "Pull stock prices from online API and perform predictions using Recurrent Neural Network & Long Short Term Memory (LSTM) with TensorFlow.js framework",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack --mode development --watch",
+    "node": "tsc --project tsconfig.node.json --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jinglescode/time-series-forecasting-tensorflowjs.git"
+  },
+  "keywords": [
+    "machine-learning",
+    "tensorflowjs",
+    "javascript"
+  ],
+  "author": "Khok Hong Jing (Jingles)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jinglescode/time-series-forecasting-tensorflowjs/issues"
+  },
+  "homepage": "https://jinglescode.github.io/time-series-forecasting-tensorflowjs",
+  "devDependencies": {
+    "@types/ndarray": "^1.0.11",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.5",
+    "webpack-cli": "^4.7.2"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.2.0",
+    "brainjs": "^0.7.4",
+    "convnetjs": "^0.3.0",
+    "ndarray": "^1.0.19",
+    "os-browserify": "^0.3.0",
+    "weblearn": "^2.1.0",
+    "weblearn-dqn": "^1.1.1"
+  }
+}
