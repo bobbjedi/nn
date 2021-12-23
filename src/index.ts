@@ -1,5 +1,5 @@
 // import RL from './libs/RL'
-import { World } from './ww'
+import { World } from './World'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 const ctx = canvas.getContext('2d')
@@ -66,9 +66,6 @@ const draw = () => {
 }
 
 // Tick the world
-// var smooth_reward_history = []
-// let smooth_reward: number| null = null
-// var flott = 0
 function tick () {
 
   if (simspeed === 3) {
@@ -79,75 +76,7 @@ function tick () {
     world.tick()
   }
   draw()
-
-  //   const rew = world.agents[0].last_reward
-  //   if (smooth_reward == null) { smooth_reward = rew }
-  //   smooth_reward = smooth_reward * 0.999 + rew * 0.001
-  //   flott += 1
-  //   if (flott === 50) {
-  // record smooth reward
-  //     if (smooth_reward_history.length >= nflot) {
-  //       smooth_reward_history = smooth_reward_history.slice(1)
-  //     }
-  //     smooth_reward_history.push(smooth_reward)
-  //     flott = 0
-  //   }
-
-//   var agent = world.agents[0]
-//   if (typeof agent.expi !== 'undefined') {
-//     $('#expi').html(agent.expi)
-//   }
-//   if (typeof agent.tderror !== 'undefined') {
-//     $('#tde').html(agent.tderror.toFixed(3))
-//   }
 }
-
-// flot stuff
-// const nflot = 1000
-// function initFlot () {
-//   var container = $('#flotreward')
-//   var res = getFlotRewards()
-//   series = [{
-//     data: res,
-//     lines: { fill: true }
-//   }]
-//   var plot = $.plot(container, series, {
-//     grid: {
-//       borderWidth: 1,
-//       minBorderMargin: 20,
-//       labelMargin: 10,
-//       backgroundColor: {
-//         colors: ['#FFF', '#e4f4f4']
-//       },
-//       margin: {
-//         top: 10,
-//         bottom: 10,
-//         left: 10,
-//       }
-//     },
-//     xaxis: {
-//       min: 0,
-//       max: nflot
-//     },
-//     yaxis: {
-//       min: -0.1,
-//       max: 0.1
-//     }
-//   })
-//   setInterval(function () {
-//     series[0].data = getFlotRewards()
-//     plot.setData(series)
-//     plot.draw()
-//   }, 100)
-// }
-// function getFlotRewards () {
-//   // zip rewards into flot data
-//   var res = []
-//   for (var i = 0, n = smooth_reward_history.length; i < n; i++) {
-//     res.push([i, smooth_reward_history[i]])
-//   }
-//   return res
-// }
 
 let current_interval_id: any
 // let skipdraw = false
@@ -158,12 +87,12 @@ const init = () => {
   spec.gamma = 0.9 // discount factor, [0, 1)
   spec.epsilon = 0.2 // initial epsilon for epsilon-greedy policy, [0, 1)
   spec.alpha = 0.005 // value function learning rate
-  spec.experience_add_every = 5 // number of time steps before we add another experience to replay memory
+  spec.experience_add_every = 5 // = 5. number of time steps before we add another experience to replay memory
   spec.experience_size = 10000 // size of experience
-  spec.learning_steps_per_iteration = 5
+  spec.learning_steps_per_iteration = 5 // =20 better but slowly
   spec.tderror_clamp = 1.0 // for robustness
   spec.num_hidden_units = 100 // number of neurons in hidden layer
-  world.initAgents(spec, 5)
+  world.initAgents(spec, 1)
   gofast()
 }
 init()

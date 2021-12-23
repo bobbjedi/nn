@@ -1,100 +1,7 @@
+import { Agent } from './Agent'
+import { Item, Wall } from './envClasses'
 import RL from './libs/RL'
-
-const randf = (lo: number, hi: number) => Math.random() * (hi - lo) + lo
-const randi = (lo: number, hi: number) => Math.floor(randf(lo, hi))
-
-// A 2D vector utility
-class Vec {
-  x: number
-  y: number
-  constructor (x: number, y: number) {
-    this.x = x
-    this.y = y
-  }
-
-  // utilities
-  dist_from (v: Vec) { return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2)) }
-  length () { return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2)) }
-
-  // new vector returning operations
-  add (v: Vec) { return new Vec(this.x + v.x, this.y + v.y) }
-  sub (v: Vec) { return new Vec(this.x - v.x, this.y - v.y) }
-  rotate (a: number) { // CLOCKWISE
-    return new Vec(this.x * Math.cos(a) + this.y * Math.sin(a),
-      -this.x * Math.sin(a) + this.y * Math.cos(a))
-  }
-
-  // in place operations
-  scale (s: number) { this.x *= s; this.y *= s }
-  normalize () { var d = this.length(); this.scale(1.0 / d) }
-}
-
-// line intersection helper function: does line segment (p1,p2) intersect segment (p3,p4) ?
-const line_intersect = (p1: Vec, p2: Vec, p3: Vec, p4: Vec) => {
-  var denom = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
-  if (denom === 0.0) { return false } // parallel lines
-  var ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denom
-  var ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denom
-  if (ua > 0.0 && ua < 1.0 && ub > 0.0 && ub < 1.0) {
-    var up = new Vec(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y))
-    return { ua, ub, up } // up is intersection point
-  }
-  return false
-}
-
-const line_point_intersect = (p1: Vec, p2: Vec, p0: Vec, rad: number) => {
-  var v = new Vec(p2.y - p1.y, -(p2.x - p1.x)) // perpendicular vector
-  var d = Math.abs((p2.x - p1.x) * (p1.y - p0.y) - (p1.x - p0.x) * (p2.y - p1.y))
-  d = d / v.length()
-  if (d > rad) { return false }
-
-  v.normalize()
-  v.scale(d)
-  var up = p0.add(v)
-  let ua: number
-  if (Math.abs(p2.x - p1.x) > Math.abs(p2.y - p1.y)) {
-    ua = (up.x - p1.x) / (p2.x - p1.x)
-  } else {
-    ua = (up.y - p1.y) / (p2.y - p1.y)
-  }
-  if (ua > 0.0 && ua < 1.0) {
-    return { ua: ua, up: up }
-  }
-  return false
-}
-
-// Wall is made up of two points
-class Wall {
-  p1: Vec
-  p2: Vec
-  constructor (p1: Vec, p2: Vec) {
-    this.p1 = p1
-    this.p2 = p2
-  }
-}
-
-// World object contains many agents and walls and food and stuff
-const util_add_box = (lst: Wall[], x: number, y: number, w: number, h: number) => {
-  lst.push(new Wall(new Vec(x, y), new Vec(x + w, y)))
-  lst.push(new Wall(new Vec(x + w, y), new Vec(x + w, y + h)))
-  lst.push(new Wall(new Vec(x + w, y + h), new Vec(x, y + h)))
-  lst.push(new Wall(new Vec(x, y + h), new Vec(x, y)))
-}
-
-// item is circle thing on the floor that agent can interact with (see or eat, etc)
-class Item {
-  p: Vec
-  v: Vec
-  type: any
-  rad = 10
-  age = 0
-  cleanup_ = false
-  constructor (x: number, y: number, type: any) {
-    this.p = new Vec(x, y) // position
-    this.v = new Vec(Math.random() * 5 - 2.5, Math.random() * 5 - 2.5)
-    this.type = type
-  }
-}
+import { line_intersect, line_point_intersect, randf, randi, Vec } from './utills'
 
 export class World {
   canvas: HTMLCanvasElement
@@ -110,13 +17,12 @@ export class World {
     this.H = canvas.height
     // set up walls in the world
     var pad = 0
-    util_add_box(this.walls, pad, pad, this.W - pad * 2, this.H - pad * 2)
-    /*
-  util_add_box(this.walls, 100, 100, 200, 300); // inner walls
-  this.walls.pop();
-  util_add_box(this.walls, 400, 100, 200, 300);
-  this.walls.pop();
-  */
+    Wall.util_add_box(this.walls, pad, pad, this.W - pad * 2, this.H - pad * 2)
+
+    // Wall.util_add_box(this.walls, 100, 100, 200, 300) // inner walls
+    // this.walls.pop()
+    // Wall.util_add_box(this.walls, 400, 100, 200, 300)
+    // this.walls.pop()
 
     // set up food and poison
     for (var k = 0; k < 50; k++) {
@@ -303,7 +209,6 @@ export class World {
         it.cleanup_ = true // replace this one, has been around too long
         update_items = true
       }
-
     }
     if (update_items) {
       var nt = []
@@ -327,100 +232,3 @@ export class World {
     }
   }
 }
-
-// Eye sensor has a maximum range and senses walls
-class Eye {
-  angle: number
-  max_range = 120
-  sensed_proximity = 120 // what the eye is seeing. will be set in world.tick()
-  sensed_type = -1 // what does the eye see?
-  vx = 0 // sensed velocity
-  vy = 0
-  constructor (angle: number) {
-    this.angle = angle // angle relative to agent its on
-  }
-}
-
-// A single agent
-class Agent {
-
-  // positional information
-  p = new Vec(300, 300)
-  v = new Vec(0, 0)
-  op = this.p // old position
-  angle = 0 // direction facing
-  oangle = 0 // direction facing
-  actions = [0, 1, 2, 3]
-  rad = 10
-  reward_bonus = 0.0
-  digestion_signal = 0.0
-  last_reward: number
-  // outputs on world
-  action = 0
-  prevactionix = -1
-  num_states: number
-
-  eyes: Eye[] = []
-  brain: any
-
-  constructor () {
-    for (var k = 0; k < 30; k++) { this.eyes.push(new Eye(k * 0.21)) }
-    this.num_states = this.eyes.length * 5 + 2
-  }
-
-  getNumStates () {
-    return this.num_states
-  }
-  getMaxNumActions () {
-    return this.actions.length
-  }
-  forward () {
-    // in forward pass the agent simply behaves in the environment
-    // create input to brain
-    var num_eyes = this.eyes.length
-    var ne = num_eyes * 5
-    var input_array = new Array(this.num_states)
-    for (var i = 0; i < num_eyes; i++) {
-      var e = this.eyes[i]
-      input_array[i * 5] = 1.0
-      input_array[i * 5 + 1] = 1.0
-      input_array[i * 5 + 2] = 1.0
-      input_array[i * 5 + 3] = e.vx // velocity information of the sensed target
-      input_array[i * 5 + 4] = e.vy
-      if (e.sensed_type !== -1) {
-        // sensed_type is 0 for wall, 1 for food and 2 for poison.
-        // lets do a 1-of-k encoding into the input array
-        input_array[i * 5 + e.sensed_type] = e.sensed_proximity / e.max_range // normalize to [0,1]
-      }
-    }
-    // proprioception and orientation
-    input_array[ne + 0] = this.v.x
-    input_array[ne + 1] = this.v.y
-
-    this.action = this.brain.act(input_array)
-    // var action = this.actions[actionix];
-    // demultiplex into behavior variables
-    // this.action = action;
-  }
-  backward () {
-    var reward = this.digestion_signal
-
-    // var proximity_reward = 0.0;
-    // var num_eyes = this.eyes.length;
-    // for(var i=0;i<num_eyes;i++) {
-    //   var e = this.eyes[i];
-    //   // agents dont like to see walls, especially up close
-    //   proximity_reward += e.sensed_type === 0 ? e.sensed_proximity/e.max_range : 1.0;
-    // }
-    // proximity_reward = proximity_reward/num_eyes;
-    // reward += proximity_reward;
-
-    // var forward_reward = 0.0;
-    // if(this.actionix === 0) forward_reward = 1;
-
-    this.last_reward = reward // for vis
-    this.brain.learn(reward)
-  }
-}
-
-// export { World }
