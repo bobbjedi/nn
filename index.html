@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <!-- <script src="//unpkg.com/brain.js"></script> -->
+    <script src="//unpkg.com/brain.js"></script>
     <script src="lib.js"></script>
     <script src="dist/bundle.js"></script>
 </head>
@@ -21,11 +21,13 @@
             background-color: darkgray;
             color: wheat;
         }
-        #message{
+
+        #message {
             margin: 10px;
             font-size: 40px;
             color: yellow;
         }
+
         #board {
             width: 300px;
             height: 300px;
@@ -43,6 +45,72 @@
             border: 1px solid black;
         }
     </style>
+
+
+    <script>
+        // const convertSoftMax = (len, pos, value) => {
+        //     const arr = []
+        //     for (let i = 0; i < len; i++) {
+        //         arr.push(i === pos ? value : 0)
+        //     }
+        //     return arr
+        // }
+
+        // const softMax = (arr) => {
+        //     let maxIndex = 0
+        //     arr.forEach((res, i) => {
+        //         if (res > arr[maxIndex]) {
+        //             maxIndex = i
+        //         }
+        //     })
+        //     return maxIndex
+        // }
+        // const Set = JSON.parse(localStorage.getItem('set'))
+        // const triningSet = Set.map(input => {
+        //     return {
+        //         output: convertSoftMax(9, input.splice(-1)[0], 1),
+        //         input,
+        //     }
+        // })
+        // const test = Set.filter(input => {
+        //     if (input.filter(s_ => s_ === 0.5).length < 2) {
+        //         return true
+        //     }
+        // })
+        // console.log(test)
+        // const config = {
+        //     binaryThresh: 0.5,
+        //     learningRate: 0.2,
+        //     momentum: 0.3,
+        //     hiddenLayers: [100, 100], // array of ints for the sizes of the hidden layers in the network
+        //     activation: 'sigmoid', // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
+        //     leakyReluAlpha: 0.01, // supported for activation type 'leaky-relu',
+        //     log: true, // true to use console.log, when a function is supplied it is used --> Either true or a function
+        //     logPeriod: 100, // iterations between logging out --> number greater than 0
+        //     callback() {
+        //         let ok = 0
+        //         let fail = 0
+        //         test.forEach(input => {
+        //             const out = net.run(input)
+        //             // console.log(out)
+        //             const res = softMax(out)
+        //             if (input[res] === 0.5) {
+        //                 ok++
+        //             } else {
+        //                 fail++
+        //             }
+        //         })
+        //         console.log({ok, fail}, fail / ok)
+        //     }, // a periodic call back that can be triggered while training --> null or function
+        //     callbackPeriod: 50, // the number of iterations through the training data between callback calls --> number greater than 0
+        // };
+
+        // // create a simple recurrent neural network
+        // const net = new brain.NeuralNetwork(config);
+        // net.trainAsync(triningSet)
+
+    </script>
+
 </body>
 
 </html>

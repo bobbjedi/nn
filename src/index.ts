@@ -1,7 +1,18 @@
 import Player from './Player'
 import Game from './Game'
 import RL from './ql'
+import TFNQD from './tf_ql'
 
+import DQL from './DQL'
+const agentS = new DQL({
+  inputSize: 9,
+  outputSize: 9,
+  epsilon: .1,
+  lastRevardedStepsOfEpisode: 2,
+  hiddensLayers: [50, 50]
+})
+const playerS = new Player(agentS, false)
+console.log('CC', playerS.brain)
 const win_: any = window
 
 var env = {
@@ -26,8 +37,28 @@ spec.num_hidden_units = 100 // number of neurons in hidden layer
 
 const agent0 = new (RL as any).DQNAgent(env, spec)
 spec.learning_steps_per_iteration = 50
-spec.num_hidden_units = 100 // number of neurons in hidden layer
+spec.num_hidden_units = 120 // number of neurons in hidden layer
 const agent1 = new (RL as any).DQNAgent(env, spec)
+
+// this.temporal_window = typeof opt.temporal_window !== 'undefined' ? opt.temporal_window : 1
+// this.experience_size = typeof opt.experience_size !== 'undefined' ? opt.experience_size : 30000
+// this.start_learn_threshold = typeof opt.start_learn_threshold !== 'undefined' ? opt.start_learn_threshold : Math.floor(Math.min(this.experience_size * 0.1, 1000))
+// this.gamma = typeof opt.gamma !== 'undefined' ? opt.gamma : 0.8
+// this.learning_steps_total = typeof opt.learning_steps_total !== 'undefined' ? opt.learning_steps_total : 100000
+// this.learning_steps_burnin = typeof opt.learning_steps_burnin !== 'undefined' ? opt.learning_steps_burnin : 3000
+// this.epsilon_min = typeof opt.epsilon_min !== 'undefined' ? opt.epsilon_min : 0.05
+// this.epsilon_test_time = typeof opt.epsilon_test_time !== 'undefined' ? opt.epsilon_test_time : 0
+
+// const agent1 = new TFNQD({
+//   num_actions: 9,
+//   // start_learn_threshold: 10,
+//   num_states: 9,
+//   temporal_window: 0,
+//   experience_size: 5000,
+//   gamma: .9,
+//   learning_steps_total: 1000000000000000,
+//   epsilon_min: 0.2
+// })
 
 // import DQN from './webndq'
 // const { ReLU, Linear, MSE, SGD, Sequential } = require('weblearn')
@@ -100,7 +131,7 @@ const delay = () => new Promise(r => setTimeout(r, .1));
     // const p2 = !win_.isShow && !String(p1.brain.id).includes('CPU') && (Math.random() < .1) ? playerCPU0 : player1
     // win_.isShow && console.log(p1.brain.id, p2.brain.id)
     // const testGame = new Game(p1, p2)
-    const testGame = new Game(playerCPU1, player1)
+    const testGame = new Game(playerCPU0, player1)
     while (testGame.isActive) {
       await testGame.step()
     }

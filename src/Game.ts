@@ -30,31 +30,29 @@ export default class Game {
     // const result = false
     if (result === false) {
       if (!this.board.some(c => c === 0.5)) {
-        this.player0.upScore(10)
-        this.player1.upScore(10)
-        this.player1.final()
+        await this.player0.finalEpisode(5)
+        await this.player1.finalEpisode(5)
         return this.isActive = false
       }
       if (this.stepCount > 2) {
-        this.player0.upScore(0)
-        this.player1.upScore(0)
+        // this.player0.upScore(0.1)
+        // this.player1.upScore(0.1)
       }
       return
     }
     this.isActive = false
     if (result === 0) {
-      this.player0.upScore(10)
-      this.player1.upScore(-20)
+      await this.player0.finalEpisode(5)
+      await this.player1.finalEpisode(-5)
       counters[this.player0.brain.id].wins++
       counters[this.player1.brain.id].lose++
     } else {
-      this.player0.upScore(-20)
-      this.player1.upScore(10)
+      await this.player0.finalEpisode(-5)
+      await this.player1.finalEpisode(5)
       counters[this.player1.brain.id].wins++
       counters[this.player0.brain.id].lose++
     }
     showWinner(result)
-    this.player1.final()
     win_.isShow && await delay(3)
   }
   // run (inputs: number[], countReccurentInputs: number) {
@@ -74,8 +72,9 @@ export default class Game {
       const res = player.run(this.board)
       if (this.board[res] !== 0.5) {
         counters[player.brain.id].fail++
-        player.upScore(-3)
+        player.learn(-3)
       } else {
+        player.learn(.1)
         counters[player.brain.id].ok++
         this.board[res] = this.nextStep
         isOk = true

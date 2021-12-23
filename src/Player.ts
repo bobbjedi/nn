@@ -13,7 +13,13 @@ export default class Player {
     this.isCPU = isCPU
     this.stepsNum = 0
   }
-  final () {
+  finalEpisode (rewards: number) {
+    if (this.isCPU) { return }
+    if (this.brain.closeEpisode) {
+      this.brain.closeEpisode(rewards)
+    } else {
+      this.brain.learn(rewards)
+    }
     // if(!this.brain.step) return
     // this.brain.step(ndarray([0, 0, 0, 0, 0, 0, 0, 0, 0]), this.predStepReward, true)
     // this.brain.learn()
@@ -34,20 +40,11 @@ export default class Player {
     }
     return isRnd ? rndStep(input) : this.brain.act(input)
   }
-  upScore (reward: number) {
+  learn (reward: number) {
     if (this.isCPU) { return }
-    countPays++
-    scores += reward
-    if (this.brain.isNew) {
-      this.predStepReward = reward
-    } else {
-      this.brain.learn(reward)
-    }
+    this.brain.learn(reward)
   }
 }
-let scores = 0
-let countPays = 0
-
 const rndStep = (board: number[]) => {
   // console.log('rrnd')
   // console.log('RND CHECK', JSON.stringify(board))
@@ -70,4 +67,4 @@ const minimaxStep = (board: number[]) => {
   }))
 }
 
-setInterval(() => console.log('Average score:', +(scores / countPays).toFixed(2)), 10000)
+// setInterval(() => console.log('Average score:', +(scores / countPays).toFixed(2)), 10000)
