@@ -103,7 +103,7 @@ function tick () {
 }
 
 // flot stuff
-const nflot = 1000
+// const nflot = 1000
 // function initFlot () {
 //   var container = $('#flotreward')
 //   var res = getFlotRewards()
@@ -163,8 +163,8 @@ const init = () => {
   spec.learning_steps_per_iteration = 5
   spec.tderror_clamp = 1.0 // for robustness
   spec.num_hidden_units = 100 // number of neurons in hidden layer
-  world.initAgents(spec)
-  gonormal()
+  world.initAgents(spec, 5)
+  gofast()
 }
 init()
 
@@ -195,11 +195,14 @@ function goslow () {
   //   skipdraw = false
   simspeed = 0
 }
-
-function saveAgent () {
+(window as any).goveryfast = goveryfast;
+(window as any).gofast = gofast;
+(window as any).gonormal = gonormal;
+(window as any).goslow = goslow
+// function saveAgent () {
 //   var brain = world.agents[0].brain
 //   JSON.stringify(brain.toJSON())
-}
+// }
 
 // function resetAgent () {
 // //   eval($('#agentspec').val())

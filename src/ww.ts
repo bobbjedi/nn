@@ -128,9 +128,9 @@ export class World {
     }
   }
 
-  initAgents (spec: any) {
+  initAgents (spec: any, agentsCount = 1) {
     this.agents = []
-    for (var k = 0; k < 1; k++) {
+    for (var k = 0; k < agentsCount; k++) {
       const a = new Agent()
       a.brain = new (RL as any).DQNAgent(a, spec) // give agent a TD brain
       this.agents.push(a)
