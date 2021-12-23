@@ -177,6 +177,7 @@ export class World {
       var it = this.items[i]
       it.age += 1
 
+      // check collide for each Agent
       // see if some agent gets lunch
       for (let j = 0, m = this.agents.length; j < m; j++) {
         var a = this.agents[j]
