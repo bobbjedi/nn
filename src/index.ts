@@ -1,4 +1,3 @@
-// import RL from './libs/RL'
 import { World } from './World'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
