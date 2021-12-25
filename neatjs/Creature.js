@@ -53,7 +53,11 @@ function Creature (model) {
   this.feedForward = function () { // Feeds forward the creature's network.
     this.network.feedForward()
   }
-
+  this.act = function (input) {
+    this.setInputs(input)
+    this.feedForward()
+    return this.desicion()
+  }
   this.setInputs = function (inputs) { // Sets the inputs of the creature.
     this.network.layers[0].setValues(inputs)
   }

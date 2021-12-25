@@ -56,7 +56,9 @@ export class World {
         const res = line_intersect(p1, p2, wall.p1, wall.p2)
         if (res) {
           (res as any).type = 0 // 0 is wall
-          if (!minres) { minres = res }
+          if (!minres) {
+            minres = res
+          }
           else {
             // check if its closer
             if (res.ua < minres.ua) {

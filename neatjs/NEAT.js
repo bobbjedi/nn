@@ -14,11 +14,14 @@ function NEAT (config) {
   this.oldCreatures = []
   this.model = config.model
   this.exportModel = []
+  this.bestCreatures = []
+  this.elitCount = Math.round(config.populationSize / 100 * config.elitismPercent)
   this.populationSize = config.populationSize || 500
   this.mutationRate = config.mutationRate || 0.05
   this.crossoverMethod = config.crossoverMethod || crossover.RANDOM
   this.mutationMethod = config.mutationMethod || mutate.RANDOM
   this.generation = 0
+  console.log('this.elitCount>', this.elitCount)
 
   for (let i = 0; i < this.model.length; i++) { // Sanitize the model.
     let data = Object.assign({}, this.model[i])
@@ -35,7 +38,7 @@ function NEAT (config) {
   }
 
   this.mutate = function () { // Parses every creature's genes passes them to the mutation function and sets their new (mutated) genes.
-    for (let i = 0; i < this.populationSize; i++) {
+    for (let i = this.elitCount; i < this.populationSize; i++) {
       let genes = this.creatures[i].flattenGenes()
       genes = this.mutationMethod(genes, this.mutationRate)
       this.creatures[i].setFlattenedGenes(genes)
@@ -43,16 +46,18 @@ function NEAT (config) {
   }
 
   this.crossover = function () { // Takes two creature's genes flattens them and passes them to the crossover function.
-    for (let i = 0; i < this.populationSize; i++) {
+    for (let i = this.elitCount; i < this.populationSize; i++) {
       this.oldCreatures = Object.assign([], this.creatures)
-      let parentx = this.pickCreature()
-      let parenty = this.pickCreature()
+      let parentx = this.pickCreatureFromElite()
+      let parenty = this.pickCreatureFromElite()
 
       let genes = this.crossoverMethod(parentx.flattenGenes(), parenty.flattenGenes())
       this.creatures[i].setFlattenedGenes(genes)
     }
   }
-
+  this.pickCreatureFromElite = function () {
+    return this.creatures[rnd(0, this.elitCount)]
+  }
   this.pickCreature = function () { // Normalizes every creature's score (fitness) and and returns a creature based on their fitness value.
     let sum = 0
     for (let i = 0; i < this.oldCreatures.length; i++) {
@@ -83,11 +88,16 @@ function NEAT (config) {
   }
 
   this.doGen = function () { // Does 1 fast generation with crossover and mutation.
+    let scoreSum = this.creatures.reduce((s, c) => {
+      return s + c.score
+    }, 0)
+    this.creatures.sort((a, b) => b.score - a.score)
+    console.log('Generation:', this.generation, 'Best score:', this.creatures[0].score, 'Average:', +(scoreSum / this.creatures.length).toFixed(2))
+    console.log('BC', this.bestCreature())
     this.crossover()
     this.mutate()
     this.generation++
     this.creatures.forEach(c => c.score = 0)
-    console.log('Generation: ' + this.generation)
   }
 
   this.bestCreature = function () { // Returns the index of the best creature from the previous generation.
@@ -101,7 +111,6 @@ function NEAT (config) {
     }
     return index
   }
-
   this.getDesicions = function () { // Returns every creature's desicion index in an array.
     let result = []
 
@@ -143,5 +152,7 @@ function NEAT (config) {
     }
   }
 }
-
+function rnd (min, max) { // min and max included
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
 export default NEAT
