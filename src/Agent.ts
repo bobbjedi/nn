@@ -35,6 +35,9 @@ export class Agent {
   getMaxNumActions () {
     return this.actions.length
   }
+  resetPos () {
+    this.p = new Vec(300, 300)
+  }
   forward () {
     // in forward pass the agent simply behaves in the environment
     // create input to brain
@@ -67,7 +70,8 @@ export class Agent {
     // this.action = action;
   }
   backward () {
-    const reward = this.digestion_signal
+    this.brain.score += this.digestion_signal
+    // const reward = this.digestion_signal
     // console.log(this.digestion_signal)
     // var proximity_reward = 0.0;
     // var num_eyes = this.eyes.length;
@@ -82,8 +86,8 @@ export class Agent {
     // var forward_reward = 0.0;
     // if(this.actionix === 0) forward_reward = 1;
 
-    this.last_reward = reward // for vis
-    this.brain.learn(reward)
+    // this.last_reward = reward // for vis
+    // this.brain.learn(reward)
   }
 }
 

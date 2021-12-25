@@ -12,9 +12,11 @@ export class World {
   items: Item[] = []
   collpoints: number[] = []
   clock = 0
-  constructor (canvas: HTMLCanvasElement) {
+  itemsCount = 100
+  constructor (canvas: HTMLCanvasElement, itemsCount: number) {
     this.W = canvas.width
     this.H = canvas.height
+    this.itemsCount = itemsCount
     // set up walls in the world
     var pad = 0
     Wall.util_add_box(this.walls, pad, pad, this.W - pad * 2, this.H - pad * 2)
@@ -25,7 +27,7 @@ export class World {
     // this.walls.pop()
 
     // set up food and poison
-    for (var k = 0; k < 50; k++) {
+    for (var k = 0; k < itemsCount; k++) {
       var x = randf(20, this.W - 20)
       var y = randf(20, this.H - 20)
       var t = randi(1, 3) // food or poison (1 and 2)
@@ -206,7 +208,7 @@ export class World {
       if (it.p.y < 1) { it.p.y = 1; it.v.y *= -1 }
       if (it.p.y > this.H - 1) { it.p.y = this.H - 1; it.v.y *= -1 }
 
-      if (it.age > 5000 && this.clock % 100 === 0 && randf(0, 1) < 0.1) {
+      if (it.age > 5000 && this.clock % 10 === 0 && randf(0, 1) < 0.1) {
         it.cleanup_ = true // replace this one, has been around too long
         update_items = true
       }
@@ -219,7 +221,8 @@ export class World {
       }
       this.items = nt // swap
     }
-    if (this.items.length < 50 && this.clock % 10 === 0 && randf(0, 1) < 0.25) {
+    if (this.items.length < this.itemsCount && this.clock % 10 === 0 && randf(0, 1) < 0.5 || this.items.length < (this.itemsCount / 2)) {
+    // if (this.items.length < this.itemsCount) {
       var newitx = randf(20, this.W - 20)
       var newity = randf(20, this.H - 20)
       var newitt = randi(1, 3) // food or poison (1 and 2)
