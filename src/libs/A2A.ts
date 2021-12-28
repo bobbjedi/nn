@@ -33,7 +33,6 @@ export default class A2C {
     this.actor.act(this.criticSet.splice(-1)[0])
     this.actor.learn(reward)
   }
-
   learn (reward: number) {
     // if (reward > 0) { ok++ }
     // if (reward < 0) { errors++ }

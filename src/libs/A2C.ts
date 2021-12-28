@@ -2,7 +2,7 @@ import RL from './RL'
 
 type I_DQN = {
     act: (s: number[], isNoNeedSoftMax: boolean) => number | number[],
-    forwardQPublic: (s: number[]) => number[],
+    forwardQPublic: (s: number[]) => number,
     learn: (r: number) => number
 }
 
@@ -11,6 +11,7 @@ const DQNAgent = (RL as any).DQNAgent
 export default class A2C {
   actor: I_DQN
   critic: I_DQN
+  countSet = 2
   criticSet: Set[] = []
 
   constructor (actorSpec: Spec, criticSpec: Spec) {
@@ -23,26 +24,27 @@ export default class A2C {
   act (s: number[]) {
     const acts = Array.from(this.actor.act(s, true) as number[])
     const sa = s.concat(acts)
-    const q = softMax(Array.from(this.critic.forwardQPublic(sa))) === 0 ? -1 : 1
+    const q = critictActsToReward(this.critic.forwardQPublic(sa))
     this.actor.learn(q)
-    // console.log('Q', q)
     this.criticSet.push({ q, sa })
     return softMax(acts)
   }
 
   learn (reward: number) {
+    if (reward > 0) { ok++ }
+    if (reward < 0) { errors++ }
     // console.log('Reward', reward)
     // this.actor.learn(reward)
     // reward = 0
-    if (reward === 0) { return }
+    if (reward === 0 && this.criticSet.length <= this.countSet) { return }
     // console.log('Reward!', this.criticSet.length)
-    this.criticSet.splice(-5).forEach(s => {
-      const pred_q = this.critic.act(s.sa, false) === 0 ? -1 : 1
+    this.criticSet.forEach(s => {
+      const pred_q = critictActsToReward(this.critic.act(s.sa, false) as number)
       if (pred_q < 0 && reward < 0 || pred_q > 0 && reward > 0) {
         this.critic.learn(1)
-        ok++
+        // ok++
       } else {
-        errors++
+        // errors++
         this.critic.learn(-1)
       }
     })
@@ -52,6 +54,11 @@ export default class A2C {
 let errors = 0
 let ok = 0
 
+const critictActsToReward = (act: number) => {
+  if (act === 0) { return -1 }
+  if (act === 1) { return 0 }
+  if (act === 2) { return 1 }
+}
 setInterval(() => {
   console.log('Res:', errors / ok)
 }, 5000)

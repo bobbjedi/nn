@@ -1062,7 +1062,7 @@ export default RL;
       var a2mat = G.add(G.mul(this.net.W2, h1mat), this.net.b2)
       return R.maxi(a2mat.w)
     },
-    act: function (slist) {
+    act: function (slist, isNoNeedSoftMax) {
       // convert to a Mat column vector
       var s = new R.Mat(this.ns, 1)
       s.setFrom(slist)
@@ -1073,7 +1073,7 @@ export default RL;
       } else {
         // greedy wrt Q function
         var amat = this.forwardQ(this.net, s, false)
-        var a = R.maxi(amat.w) // returns index of argmax action
+        var a = isNoNeedSoftMax ? amat.w : R.maxi(amat.w) // returns index of argmax action
       }
 
       // shift state memory
