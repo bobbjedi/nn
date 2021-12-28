@@ -72,9 +72,9 @@ export default class Game {
       const res = player.run(this.board)
       if (this.board[res] !== 0.5) {
         counters[player.brain.id].fail++
-        player.learn(-3)
+        player.brain.violationRules(-3)
       } else {
-        player.learn(.1)
+        // player.learn(.1)
         counters[player.brain.id].ok++
         this.board[res] = this.nextStep
         isOk = true

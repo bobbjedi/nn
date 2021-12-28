@@ -1053,6 +1053,15 @@ export default RL;
       this.lastG = G // back this up. Kind of hacky isn't it
       return a2mat
     },
+    forwardQPublic (slist) {
+      const s = new R.Mat(this.ns, 1)
+      s.setFrom(slist)
+      var G = new R.Graph(false)
+      var a1mat = G.add(G.mul(this.net.W1, s), this.net.b1)
+      var h1mat = G.tanh(a1mat)
+      var a2mat = G.add(G.mul(this.net.W2, h1mat), this.net.b2)
+      return R.maxi(a2mat.w)
+    },
     act: function (slist) {
       // convert to a Mat column vector
       var s = new R.Mat(this.ns, 1)

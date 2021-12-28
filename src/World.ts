@@ -1,5 +1,6 @@
 import { Agent } from './Agent'
 import { Item, Wall } from './envClasses'
+import A2A, { Spec } from './libs/A2A'
 import RL from './libs/RL'
 import { line_intersect, line_point_intersect, randf, randi, Vec } from './utills'
 
@@ -34,11 +35,21 @@ export class World {
     }
   }
 
-  initAgents (spec: any, agentsCount = 1) {
+  initAgents (agentSpec: Spec, agentsCount = 1) {
     this.agents = []
     for (var k = 0; k < agentsCount; k++) {
       const a = new Agent()
-      a.brain = new (RL as any).DQNAgent(a, spec) // give agent a TD brain
+
+      // const criticSpec: Spec = JSON.parse(JSON.stringify(agentSpec))
+      // agentSpec.statesCount = a.getNumStates()
+      // agentSpec.actionsCount = a.getMaxNumActions()
+
+      // criticSpec.statesCount = agentSpec.statesCount + agentSpec.actionsCount
+      // criticSpec.actionsCount = 2
+      // a.brain = (new A2C(agentSpec, criticSpec)).actor // give agent a TD brain
+      a.brain = (new A2A(a, agentSpec)) // give agent a TD brain
+      console.log(a.brain)
+      // a.brain = new (RL as any).DQNAgent(a, spec) // give agent a TD brain
       this.agents.push(a)
     }
   }

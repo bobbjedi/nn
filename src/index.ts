@@ -1,4 +1,5 @@
 // import RL from './libs/RL'
+import { Spec } from './libs/A2A'
 import { World } from './World'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
@@ -82,7 +83,7 @@ let current_interval_id: any
 // let skipdraw = false
 
 const init = () => {
-  const spec: any = {}
+  const spec = {} as Spec
   spec.update = 'qlearn' // qlearn | sarsa
   spec.gamma = 0.9 // discount factor, [0, 1)
   spec.epsilon = 0.2 // initial epsilon for epsilon-greedy policy, [0, 1)
@@ -93,7 +94,7 @@ const init = () => {
   spec.tderror_clamp = 1.0 // for robustness
   spec.num_hidden_units = 100 // number of neurons in hidden layer
   world.initAgents(spec, 1)
-  gofast()
+  setTimeout(goveryfast)
 }
 init()
 
