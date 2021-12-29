@@ -1,16 +1,7 @@
-import RL from './RL'
-
-type I_DQN = {
-  act: (s: number[]) => number,
-  forwardQPublic: (s: number[]) => void,
-  learn: (r: number) => number
-  violationRules: (r: number) => void
-}
-
-const DQNAgent = (RL as any).DQNAgent
+import DQNAgent from './RL'
 
 export default class A2C {
-  actor: I_DQN
+  actor: DQNAgent
   criticSet: number[][] = []
   countSet = 2
 

@@ -94,7 +94,7 @@ const init = () => {
   spec.tderror_clamp = 1.0 // for robustness
   spec.num_hidden_units = 100 // number of neurons in hidden layer
   world.initAgents(spec, 1)
-  setTimeout(goveryfast)
+  setTimeout(goslow)
 }
 init()
 

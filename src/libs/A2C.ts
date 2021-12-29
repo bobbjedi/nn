@@ -1,16 +1,8 @@
-import RL from './RL'
-
-type I_DQN = {
-    act: (s: number[], isNoNeedSoftMax: boolean) => number | number[],
-    forwardQPublic: (s: number[]) => number,
-    learn: (r: number) => number
-}
-
-const DQNAgent = (RL as any).DQNAgent
+import DQNAgent from './RL'
 
 export default class A2C {
-  actor: I_DQN
-  critic: I_DQN
+  actor: DQNAgent
+  critic: DQNAgent
   countSet = 2
   criticSet: Set[] = []
 
@@ -20,17 +12,26 @@ export default class A2C {
     console.log({ actorParams, criticParams })
     this.actor = new DQNAgent(actorParams.opt, actorParams.spec)
     this.critic = new DQNAgent(criticParams.opt, criticParams.spec)
+
+    setInterval(() => {
+      console.log('Res:', errors / ok, 'Act:', this.actor.tderror, 'Cr:', this.critic.tderror)
+    }, 5000)
   }
   act (s: number[]) {
-    const acts = Array.from(this.actor.act(s, true) as number[])
-    const sa = s.concat(acts)
+    const act = this.actor.act(s)
+    const sa = s.concat(convertSoftMax(this.actor.na, act, 1))
+
     const q = critictActsToReward(this.critic.forwardQPublic(sa))
-    this.actor.learn(q)
     this.criticSet.push({ q, sa })
-    return softMax(acts)
+
+    // const q = critictActsToReward(this.critic.act(sa))
+    this.actor.learn(q)
+    return act
   }
 
   learn (reward: number) {
+    // this.critic.learn(reward)
+
     if (reward > 0) { ok++ }
     if (reward < 0) { errors++ }
     // console.log('Reward', reward)
@@ -39,12 +40,12 @@ export default class A2C {
     if (reward === 0 && this.criticSet.length <= this.countSet) { return }
     // console.log('Reward!', this.criticSet.length)
     this.criticSet.forEach(s => {
-      const pred_q = critictActsToReward(this.critic.act(s.sa, false) as number)
-      if (pred_q < 0 && reward < 0 || pred_q > 0 && reward > 0) {
+      const pred_q = critictActsToReward(this.critic.act(s.sa))
+      if (pred_q === reward) {
         this.critic.learn(1)
-        // ok++
+        ok++
       } else {
-        // errors++
+        errors++
         this.critic.learn(-1)
       }
     })
@@ -59,9 +60,7 @@ const critictActsToReward = (act: number) => {
   if (act === 1) { return 0 }
   if (act === 2) { return 1 }
 }
-setInterval(() => {
-  console.log('Res:', errors / ok)
-}, 5000)
+
 const optsAndSpec = (spec: Spec) => {
   const spec_ = { ...spec }
   const opt: Opt = {
