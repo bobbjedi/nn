@@ -52,27 +52,33 @@ DQNAgent.prototype = {
     this.lastG = G // back this up. Kind of hacky isn't it
     return amatOut
   },
-  forwardQPublic (slist) {
+  forwardQPublic (slist, validActs) {
+    const { net } = this
     const s = new Mat(this.ns, 1)
     s.setFrom(slist)
     var G = new Graph(false)
-    var a1mat = G.add(G.mul(this.net.W1, s), this.net.b1)
-    var h1mat = G.tanh(a1mat)
-    var a2mat = G.add(G.mul(this.net.W2, h1mat), this.net.b2)
-    return maxi(a2mat.w)
+    let amat = G.add(G.mul(net.W1, s), net.b1)
+    let hmat = G.tanh(amat)
+
+    this.num_hidden_layers.forEach((units, i) => {
+      if (!i) { return }
+      amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
+      hmat = G.tanh(amat)
+    })
+    return maxi(G.add(G.mul(net.Wout, hmat), net.bout).w, validActs)
   },
-  act: function (slist) {
+  act: function (slist, validActs) {
     // convert to a Mat column vector
     const s = new Mat(this.ns, 1)
     s.setFrom(slist)
     let a
     // epsilon greedy policy
     if (Math.random() < this.epsilon) {
-      a = randi(0, this.na)
+      a = validActs ? validActs[randi(0, validActs.length)] : randi(0, this.na)
     } else {
       // greedy wrt Q function
       const amat = this.forwardQ(this.net, s, false)
-      a = maxi(amat.w) // returns index of argmax action
+      a = maxi(amat.w, validActs) // returns index of argmax action
     }
 
     // shift state memory
@@ -83,6 +89,28 @@ DQNAgent.prototype = {
 
     return a
   },
+  // act: function (slist) {
+  //   // convert to a Mat column vector
+  //   const s = new Mat(this.ns, 1)
+  //   s.setFrom(slist)
+  //   let a
+  //   // epsilon greedy policy
+  //   if (Math.random() < this.epsilon) {
+  //     a = randi(0, this.na)
+  //   } else {
+  //     // greedy wrt Q function
+  //     const amat = this.forwardQ(this.net, s, false)
+  //     a = maxi(amat.w) // returns index of argmax action
+  //   }
+
+  //   // shift state memory
+  //   this.s0 = this.s1
+  //   this.a0 = this.a1
+  //   this.s1 = s
+  //   this.a1 = a
+
+  //   return a
+  // },
   learn: function (r1) {
     // perform an update on Q function
     if (!(this.r0 === null) && this.alpha > 0) {
@@ -170,24 +198,24 @@ DQNAgent.prototype = {
 
     this.tderror = 0 // for visualization only...
   },
-  // toJSON: function () {
-  //   // save function
-  //   var j = {}
-  //   j.nh1 = this.nh1
-  //   j.nh2 = this.nh2
-  //   j.ns = this.ns
-  //   j.na = this.na
-  //   j.net = netToJSON(this.net)
-  //   return j
-  // },
-  // fromJSON: function (j) {
-  //   // load function
-  //   this.nh1 = j.nh1
-  //   this.nh2 = j.nh2
-  //   this.ns = j.ns
-  //   this.na = j.na
-  //   this.net = netFromJSON(j.net)
-  // },
+  toJSON: function () {
+    // save function
+    var j = {}
+    j.nh1 = this.nh1
+    j.nh2 = this.nh2
+    j.ns = this.ns
+    j.na = this.na
+    j.net = netToJSON(this.net)
+    return j
+  },
+  fromJSON: function (j) {
+    // load function
+    this.nh1 = j.nh1
+    this.nh2 = j.nh2
+    this.ns = j.ns
+    this.na = j.na
+    this.net = netFromJSON(j.net)
+  },
 }
 
 export default DQNAgent
@@ -726,13 +754,13 @@ var sig = function (x) {
   return 1.0 / (1 + Math.exp(-x))
 }
 
-var maxi = function (w) {
+var maxi = function (w, validActs) {
   // argmax of array w
-  var maxv = w[0]
-  var maxix = 0
-  for (var i = 1, n = w.length; i < n; i++) {
+  var maxv = -1000000000000000000
+  var maxix = validActs ? validActs[0] : 0
+  for (var i = 0, n = w.length; i < n; i++) {
     var v = w[i]
-    if (v > maxv) {
+    if (v > maxv && (!validActs || validActs.includes(i))) {
       maxix = i
       maxv = v
     }

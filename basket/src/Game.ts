@@ -80,8 +80,6 @@ export default class Game {
 const defaultCounter = {
   wins: 0,
   lose: 0,
-  ok: 0,
-  fail: 0
 }
 const delay = (t: number) => new Promise(r => setTimeout(r, t * 1000))
 const counters: { [key: string]: typeof defaultCounter } = {}
@@ -98,10 +96,8 @@ setInterval(() => {
     const counter: typeof counters['0'] = {
       wins: counters[id].wins - predCounters[id].wins,
       lose: counters[id].lose - predCounters[id].lose,
-      fail: counters[id].fail - predCounters[id].fail,
-      ok: counters[id].ok - predCounters[id].ok,
     }
-    console.log('#' + id, counter, `Error: ${+(counter.fail / counter.ok).toFixed(5)} | Effect: ${+(counter.wins / counter.lose).toFixed(5)}`)
+    console.log('#' + id, counter, `Effect: ${+(counter.wins / counter.lose).toFixed(5)}`)
     // console.log('#' + id, counter, `Error: ${+((counter.fail - predCounters[id].fail) / (counter.ok - predCounters[id].ok)).toFixed(5)} | Effect: ${+(counter.wins / counter.lose).toFixed(5)}`)
     predCounters[id] = { ...counters[id] }
   })

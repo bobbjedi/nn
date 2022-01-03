@@ -1,23 +1,18 @@
 import DQNAgent from './RL'
 
-export default class A2C {
+export default class A2A {
   actor: DQNAgent
   criticSet: number[][] = []
-  countSet = 2
+  countSet: number
 
-  constructor (env: Env, spec: Spec) {
+  constructor (env: Env, spec: Spec, countSet = 0) {
     this.actor = new DQNAgent(env, spec)
-    // setInterval(() => {
-    // console.log('Res:', this.countSet, { errors, ok }, errors / ok)
-    // errors = 0
-    // ok = 0
-    // }, 10000)
+    this.countSet = countSet
   }
 
-  act (s: number[]) {
-    // return this.actor.act(s)
+  act (s: number[], validActs?: number[]) {
     this.criticSet.push(s)
-    const act = this.actor.forwardQPublic(s)
+    const act = this.actor.forwardQPublic(s, validActs)
     return act
   }
   violationRules (reward: number) {
@@ -25,12 +20,7 @@ export default class A2C {
     this.actor.learn(reward)
   }
   learn (reward: number) {
-    // if (reward > 0) { ok++ }
-    // if (reward < 0) { errors++ }
-    // return this.actor.learn(reward)
     if (reward === 0 && this.criticSet.length <= this.countSet) { return }
-    // console.log('Reward:', reward, 'Count:', this.criticSet.length)
-    // this.criticSet.reverse()
     this.criticSet.forEach((s, i) => {
       this.actor.act(s)
       this.actor.learn(reward / (this.criticSet.length - i))

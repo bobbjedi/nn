@@ -17,7 +17,7 @@ console.log('CC', playerS.brain)
 const win_: any = window
 
 var env = {
-  getNumStates: () => 8,
+  getNumStates: () => 9,
   getMaxNumActions: () => 9
 }
 // create the agent, yay!
@@ -38,9 +38,9 @@ spec.num_hidden_units = 100 // number of neurons in hidden layer
 
 const agent0 = new DQNAgent(env, spec)
 spec.learning_steps_per_iteration = 50
-spec.num_hidden_layers = [120, 120] // number of neurons in hidden layer
+spec.num_hidden_layers = [150, 100] // number of neurons in hidden layer
 const agent1 = new DQNAgent(env, spec)
-
+console.log(spec)
 const agentA2A = new A2A(env, spec)
 // this.temporal_window = typeof opt.temporal_window !== 'undefined' ? opt.temporal_window : 1
 // this.experience_size = typeof opt.experience_size !== 'undefined' ? opt.experience_size : 30000
