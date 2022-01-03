@@ -92,9 +92,9 @@ const init = () => {
   spec.experience_size = 10000 // size of experience
   spec.learning_steps_per_iteration = 5 // =20 better but slowly
   spec.tderror_clamp = 1.0 // for robustness
-  spec.num_hidden_layers = [200, 100, 30] // number of neurons in hidden layer
+  spec.num_hidden_layers = [100, 50, 20] // number of neurons in hidden layer
   world.initAgents(spec, 1)
-  setTimeout(goslow)
+  setTimeout(goveryfast)
 }
 init()
 

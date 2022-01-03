@@ -68,6 +68,9 @@ export class Agent {
   }
   backward () {
     const reward = this.digestion_signal
+    if (reward > 0) { positiveRw++ }
+    if (reward < 0) { negativeRw++ }
+    countRw++
     // console.log(this.digestion_signal)
     // var proximity_reward = 0.0;
     // var num_eyes = this.eyes.length;
@@ -86,7 +89,11 @@ export class Agent {
     this.brain.learn(reward)
   }
 }
-
+let positiveRw = 0
+let negativeRw = 0
+let countRw = 0
+setInterval(() => console.log('Q:', +(positiveRw / negativeRw).toFixed(2)), 10000)
+setInterval(() => console.log({ steps: +(countRw / 1000).toFixed(), positiveRw, negativeRw }, positiveRw = negativeRw = 0), 60000)
 // Eye sensor has a maximum range and senses walls
 class Eye {
   angle: number

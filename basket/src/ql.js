@@ -52,7 +52,7 @@ DQNAgent.prototype = {
     this.lastG = G // back this up. Kind of hacky isn't it
     return amatOut
   },
-  forwardQPublic (slist) {
+  clearAct (slist) {
     const s = new Mat(this.ns, 1)
     s.setFrom(slist)
     var G = new Graph(false)

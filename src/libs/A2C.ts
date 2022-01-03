@@ -21,7 +21,7 @@ export default class A2C {
     const act = this.actor.act(s)
     const sa = s.concat(convertSoftMax(this.actor.na, act, 1))
 
-    const q = critictActsToReward(this.critic.forwardQPublic(sa))
+    const q = critictActsToReward(this.critic.clearAct(sa))
     this.criticSet.push({ q, sa })
 
     // const q = critictActsToReward(this.critic.act(sa))

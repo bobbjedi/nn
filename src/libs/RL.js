@@ -22,7 +22,7 @@ const DQNAgent = function (env, opt) {
   this.reset()
 }
 DQNAgent.prototype = {
-  forwardQ: function (net, s, needs_backprop) {
+  forwardQ (net, s, needs_backprop) {
     var G = new Graph(needs_backprop)
 
     let amat = G.add(G.mul(net.W1, s), net.b1)
@@ -30,44 +30,37 @@ DQNAgent.prototype = {
 
     this.num_hidden_layers.forEach((units, i) => {
       if (!i) { return }
-
-      // const inp = this['nh' + (i - 1)] || this.ns
-      // const out = this['nh' + i]
-      // this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
-      // this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
       amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
       hmat = G.tanh(amat)
     })
     const amatOut = G.add(G.mul(net.Wout, hmat), net.bout)
 
-    // // l1
-    // var a1mat = G.add(G.mul(net.W1, s), net.b1)
-    // var h1mat = G.tanh(a1mat)
-    // // l2
-    // var a12mat = G.add(G.mul(net.W12, h1mat), net.b12)
-    // var h12mat = G.tanh(a12mat)
-    // // L 3
-    // var a2mat = G.add(G.mul(net.W2, h12mat), net.b2)
-
-    this.lastG = G // back this up. Kind of hacky isn't it
-    return amatOut
+    // this.lastG = G // back this up. Kind of hacky isn't it
+    return { amatOut, G }
   },
-  forwardQPublic (slist, validActs) {
-    const { net } = this
-    const s = new Mat(this.ns, 1)
-    s.setFrom(slist)
-    var G = new Graph(false)
-    let amat = G.add(G.mul(net.W1, s), net.b1)
-    let hmat = G.tanh(amat)
+  clearAct (slist, validActs) {
+    return this.act_(slist, validActs, false)
+    // if (Math.random() < this.epsilon) {
+    //   return validActs ? validActs[randi(0, validActs.length)] : randi(0, this.na)
+    // }
+    // const { net } = this
+    // const s = new Mat(this.ns, 1)
+    // s.setFrom(slist)
+    // var G = new Graph(false)
+    // let amat = G.add(G.mul(net.W1, s), net.b1)
+    // let hmat = G.tanh(amat)
 
-    this.num_hidden_layers.forEach((units, i) => {
-      if (!i) { return }
-      amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
-      hmat = G.tanh(amat)
-    })
-    return maxi(G.add(G.mul(net.Wout, hmat), net.bout).w, validActs)
+    // this.num_hidden_layers.forEach((units, i) => {
+    //   if (!i) { return }
+    //   amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
+    //   hmat = G.tanh(amat)
+    // })
+    // return maxi(G.add(G.mul(net.Wout, hmat), net.bout).w, validActs)
   },
-  act: function (slist, validActs) {
+  act (slist, validActs) {
+    return this.act_(slist, validActs, true)
+  },
+  act_ (slist, validActs, isShiftStates = false) {
     // convert to a Mat column vector
     const s = new Mat(this.ns, 1)
     s.setFrom(slist)
@@ -77,75 +70,61 @@ DQNAgent.prototype = {
       a = validActs ? validActs[randi(0, validActs.length)] : randi(0, this.na)
     } else {
       // greedy wrt Q function
-      const amat = this.forwardQ(this.net, s, false)
+      const amat = this.forwardQ(this.net, s, false).amatOut
       a = maxi(amat.w, validActs) // returns index of argmax action
     }
 
     // shift state memory
+    isShiftStates && this.shiftStates(s, a)
+    return a
+  },
+  shiftStates (s, a) {
     this.s0 = this.s1
     this.a0 = this.a1
     this.s1 = s
     this.a1 = a
-
-    return a
   },
-  // act: function (slist) {
-  //   // convert to a Mat column vector
-  //   const s = new Mat(this.ns, 1)
-  //   s.setFrom(slist)
-  //   let a
-  //   // epsilon greedy policy
-  //   if (Math.random() < this.epsilon) {
-  //     a = randi(0, this.na)
-  //   } else {
-  //     // greedy wrt Q function
-  //     const amat = this.forwardQ(this.net, s, false)
-  //     a = maxi(amat.w) // returns index of argmax action
-  //   }
+  setExp (s0, a0, r0, s1, isForce = false) {
+    // decide if we should keep this experience in the replay
+    if (this.t % this.experience_add_every === 0 || isForce) {
+      this.exp[this.expi] = [s0, a0, r0, s1]
+      this.expi++
+      if (this.expi > this.experience_size) { this.expi = 0 } // roll over when we run out
+    }
+    this.t++
+  },
+  replayLearn () {
+    if (this.exp.length < this.learning_steps_per_iteration / 2) { return }
+    // sample some additional experience from replay memory and learn from it
+    const lastSet = this.exp[this.exp.length - 1]
+    var tderror = this.learnFromTuple(lastSet[0], lastSet[1], lastSet[2], lastSet[3])
+    this.tderror = tderror // a measure of surprise
 
-  //   // shift state memory
-  //   this.s0 = this.s1
-  //   this.a0 = this.a1
-  //   this.s1 = s
-  //   this.a1 = a
-
-  //   return a
-  // },
-  learn: function (r1) {
+    for (var k = 0; k < this.learning_steps_per_iteration; k++) {
+      var ri = randi(0, this.exp.length) // todo: priority sweeps?
+      var e = this.exp[ri]
+      this.learnFromTuple(e[0], e[1], e[2], e[3])
+    }
+  },
+  learn (r1, isForceSave = false) {
     // perform an update on Q function
     if (!(this.r0 === null) && this.alpha > 0) {
-
-      // learn from this tuple to get a sense of how "surprising" it is to the agent
-      var tderror = this.learnFromTuple(this.s0, this.a0, this.r0, this.s1)
-      this.tderror = tderror // a measure of surprise
-
-      // decide if we should keep this experience in the replay
-      if (this.t % this.experience_add_every === 0) {
-        this.exp[this.expi] = [this.s0, this.a0, this.r0, this.s1]
-        this.expi += 1
-        if (this.expi > this.experience_size) { this.expi = 0 } // roll over when we run out
-      }
-      this.t += 1
-
-      // sample some additional experience from replay memory and learn from it
-      for (var k = 0; k < this.learning_steps_per_iteration; k++) {
-        var ri = randi(0, this.exp.length) // todo: priority sweeps?
-        var e = this.exp[ri]
-        this.learnFromTuple(e[0], e[1], e[2], e[3], e[4])
-      }
+      this.setExp(this.s0, this.a0, this.r0, this.s1, isForceSave)
+      this.replayLearn()
     }
     this.r0 = r1 // store for next update
   },
-  learnFromTuple: function (s0, a0, r0, s1) {
+  learnFromTuple (s0, a0, r0, s1) {
     // want: Q(s,a) = r + gamma * max_a' Q(s',a')
 
     // compute the target Q value
-    var tmat = this.forwardQ(this.net, s1, false)
-    var qmax = r0 + this.gamma * tmat.w[maxi(tmat.w)]
+    const tmat = this.forwardQ(this.net, s1, false).amatOut
+    const qmax = r0 + this.gamma * tmat.w[maxi(tmat.w)]
 
     // now predict
-    var pred = this.forwardQ(this.net, s0, true)
-
+    const predOut = this.forwardQ(this.net, s0, true)
+    const pred = predOut.amatOut
+    const G = predOut.G
     var tderror = pred.w[a0] - qmax
     var clamp = this.tderror_clamp
     if (Math.abs(tderror) > clamp) { // huber loss to robustify
@@ -153,7 +132,7 @@ DQNAgent.prototype = {
       if (tderror < -clamp) { tderror = -clamp }
     }
     pred.dw[a0] = tderror
-    this.lastG.backward() // compute gradients on net params
+    G.backward() // compute gradients on net params
 
     // update net
     updateNet(this.net, this.alpha)

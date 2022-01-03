@@ -12,7 +12,7 @@ export default class A2A {
 
   act (s: number[], validActs?: number[]) {
     this.criticSet.push(s)
-    const act = this.actor.forwardQPublic(s, validActs)
+    const act = this.actor.clearAct(s, validActs)
     return act
   }
   violationRules (reward: number) {
