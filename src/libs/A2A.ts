@@ -53,6 +53,7 @@ export type Spec = {
   learning_steps_per_iteration: number // =20 better but slowly
   tderror_clamp: number // for robustness
   num_hidden_units: number // number of neurons in hidden layer
+  num_hidden_layers?: number[] // number of neurons in hidden layer
 }
 export type Env = {
   getNumStates?: () => number

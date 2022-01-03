@@ -32,13 +32,6 @@ export default class A2CAgent {
     this.pred_state = convertSoftMax(state_size, 0, 0)
     this.pred_actions = convertSoftMax(action_size, 0, 0)
 
-    const config = {
-      // binaryThresh: 0.5,
-      hiddenLayers: [200, 200], // array of ints for the sizes of the hidden layers in the network
-      // activation: 'sigmoid', // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
-      // leakyReluAlpha: 0.01, // supported for activation type 'leaky-relu'
-    }
-
     // create a simple feed forward neural network with backpropagation
     this.actor = new brain.NeuralNetwork({
       // inputSize: state_size,

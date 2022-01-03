@@ -9,48 +9,30 @@ const DQNAgent = function (env, opt) {
   this.learning_steps_per_iteration = getopt(opt, 'learning_steps_per_iteration', 10)
   this.tderror_clamp = getopt(opt, 'tderror_clamp', 1.0)
 
-  this.num_hidden_layers = getopt(opt, 'num_hidden_layers', [100])
+  this.num_hidden_units = getopt(opt, 'num_hidden_units', 100)
 
   this.env = env
 
-  this.num_hidden_layers.forEach((units, i) => this['nh' + i] = 0)
-
   this.na = 0
   this.ns = 0
+  this.nh1 = 0
+  this.nh2 = 0
   this.tderror = 0
-
   this.reset()
 }
 DQNAgent.prototype = {
   forwardQ: function (net, s, needs_backprop) {
     var G = new Graph(needs_backprop)
-
-    let amat = G.add(G.mul(net.W1, s), net.b1)
-    let hmat = G.tanh(amat)
-
-    this.num_hidden_layers.forEach((units, i) => {
-      if (!i) { return }
-
-      // const inp = this['nh' + (i - 1)] || this.ns
-      // const out = this['nh' + i]
-      // this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
-      // this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
-      amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
-      hmat = G.tanh(amat)
-    })
-    const amatOut = G.add(G.mul(net.Wout, hmat), net.bout)
-
-    // // l1
-    // var a1mat = G.add(G.mul(net.W1, s), net.b1)
-    // var h1mat = G.tanh(a1mat)
-    // // l2
-    // var a12mat = G.add(G.mul(net.W12, h1mat), net.b12)
-    // var h12mat = G.tanh(a12mat)
-    // // L 3
-    // var a2mat = G.add(G.mul(net.W2, h12mat), net.b2)
-
+    // l1
+    var a1mat = G.add(G.mul(net.W1, s), net.b1)
+    var h1mat = G.tanh(a1mat)
+    // l2
+    var a12mat = G.add(G.mul(net.W12, h1mat), net.b12)
+    var h12mat = G.tanh(a12mat)
+    // L 3
+    var a2mat = G.add(G.mul(net.W2, h12mat), net.b2)
     this.lastG = G // back this up. Kind of hacky isn't it
-    return amatOut
+    return a2mat
   },
   forwardQPublic (slist) {
     const s = new Mat(this.ns, 1)
@@ -132,7 +114,8 @@ DQNAgent.prototype = {
     return tderror
   },
   reset: function () {
-    this.num_hidden_layers.forEach((units, i) => this['nh' + i] = units)
+    this.nh1 = this.num_hidden_units // numer of hidden units
+    this.nh2 = this.num_hidden_units // numer of hidden units
     this.ns = this.env.getNumStates()
     this.na = this.env.getMaxNumActions()
 
@@ -141,22 +124,15 @@ DQNAgent.prototype = {
     // on top of Mats, but for now sticking with this
     this.net = {}
     // hidden layer
-    this.net.W1 = new RandMat(this.nh0, this.ns, 0, 0.01) // input = States count, output = Hidden Neurons count
-    this.net.b1 = new Mat(this.nh0, 1, 0, 0.01) // biases count = Hidden Neurons count
-    this.num_hidden_layers.forEach((units, i) => {
-      if (!i) { return }
-      const inp = this['nh' + (i - 1)] || this.ns
-      const out = this['nh' + i]
-      this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
-      this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
-    })
-    // this.net.W12 = new RandMat(this.nh2, this.nh1, 0, 0.01) // input = States count, output = Hidden Neurons count
-    // this.net.b12 = new Mat(this.nh2, 1, 0, 0.01) // biases count = Hidden Neurons count
-    // // output later
-    this.net.Wout = new RandMat(this.na, this['nh' + (this.num_hidden_layers.length - 1)], 0, 0.01) // input = Hidden Neurons count, output = Actions count
-    this.net.bout = new Mat(this.na, 1, 0, 0.01) // biases count = Actions count
+    this.net.W1 = new RandMat(this.nh1, this.ns, 0, 0.01) // input = States count, output = Hidden Neurons count
+    this.net.b1 = new Mat(this.nh1, 1, 0, 0.01) // biases count = Hidden Neurons count
 
-    console.log('NET', this.net)
+    this.net.W12 = new RandMat(this.nh2, this.nh1, 0, 0.01) // input = States count, output = Hidden Neurons count
+    this.net.b12 = new Mat(this.nh2, 1, 0, 0.01) // biases count = Hidden Neurons count
+    // output later
+    this.net.W2 = new RandMat(this.na, this.nh2, 0, 0.01) // input = Hidden Neurons count, output = Actions count
+    this.net.b2 = new Mat(this.na, 1, 0, 0.01) // biases count = Actions count
+
     this.exp = [] // experience
     this.expi = 0 // where to insert
 
@@ -170,24 +146,24 @@ DQNAgent.prototype = {
 
     this.tderror = 0 // for visualization only...
   },
-  // toJSON: function () {
-  //   // save function
-  //   var j = {}
-  //   j.nh1 = this.nh1
-  //   j.nh2 = this.nh2
-  //   j.ns = this.ns
-  //   j.na = this.na
-  //   j.net = netToJSON(this.net)
-  //   return j
-  // },
-  // fromJSON: function (j) {
-  //   // load function
-  //   this.nh1 = j.nh1
-  //   this.nh2 = j.nh2
-  //   this.ns = j.ns
-  //   this.na = j.na
-  //   this.net = netFromJSON(j.net)
-  // },
+  toJSON: function () {
+    // save function
+    var j = {}
+    j.nh1 = this.nh1
+    j.nh2 = this.nh2
+    j.ns = this.ns
+    j.na = this.na
+    j.net = netToJSON(this.net)
+    return j
+  },
+  fromJSON: function (j) {
+    // load function
+    this.nh1 = j.nh1
+    this.nh2 = j.nh2
+    this.ns = j.ns
+    this.na = j.na
+    this.net = netFromJSON(j.net)
+  },
 }
 
 export default DQNAgent
