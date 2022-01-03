@@ -1,7 +1,7 @@
 import Player from './Player'
 import Game from './Game'
-import RL from './ql'
-import A2A from '../../src/libs/A2A'
+import DQNAgent from './ql'
+import A2A, { Spec } from '../../src/libs/A2A'
 import TFNQD from './tf_ql'
 
 import DQL from './DQL'
@@ -21,11 +21,11 @@ var env = {
   getMaxNumActions: () => 9
 }
 // create the agent, yay!
-const spec: any = { alpha: 0.01 } // see full options on top of this page
+const spec: Spec = { alpha: 0.01 } as Spec// see full options on top of this page
 spec.update = 'qlearn' // qlearn | sarsa
 spec.gamma = 0.9 // discount factor, [0, 1)
 spec.epsilon = 0.2 // initial epsilon for epsilon-greedy policy, [0, 1)
-spec.alpha = 0.01 // value function learning rate
+spec.alpha = 0.05 // value function learning rate
 
 spec.experience_add_every = 5 // По умолчанию = 5. number of time steps before we add another experience to replay memory
 // REINFORCEjs не добавит новых возможностей для воспроизведения каждого кадра, чтобы попытаться сэкономить ресурсы
@@ -36,10 +36,10 @@ spec.learning_steps_per_iteration = 2 // По умолчанию = 20. чем б
 spec.tderror_clamp = 1.0 // for robustness
 spec.num_hidden_units = 100 // number of neurons in hidden layer
 
-const agent0 = new (RL as any).DQNAgent(env, spec)
+const agent0 = new DQNAgent(env, spec)
 spec.learning_steps_per_iteration = 50
-spec.num_hidden_units = 120 // number of neurons in hidden layer
-const agent1 = new (RL as any).DQNAgent(env, spec)
+spec.num_hidden_layers = [120, 120] // number of neurons in hidden layer
+const agent1 = new DQNAgent(env, spec)
 
 const agentA2A = new A2A(env, spec)
 // this.temporal_window = typeof opt.temporal_window !== 'undefined' ? opt.temporal_window : 1
@@ -104,8 +104,8 @@ const agentA2A = new A2A(env, spec)
 // let loss = agent.learn()
 
 // const agent1 = new (RL as any).DQNAgent(env, spec);
-agent0.id = 0
-agent1.id = 1
+// agent0.id = 0
+// agent1.id = 1
 // setInterval(()=>console.log(agent), 10000)
 // setInterval(function(){ // start the learning loop
 //   var action = agent.act(s); // s is an array of length 8
@@ -134,7 +134,7 @@ const delay = () => new Promise(r => setTimeout(r, .1));
     // const p2 = !win_.isShow && !String(p1.brain.id).includes('CPU') && (Math.random() < .1) ? playerCPU0 : player1
     // win_.isShow && console.log(p1.brain.id, p2.brain.id)
     // const testGame = new Game(p1, p2)
-    const testGame = new Game(playerCPU0, playerA)
+    const testGame = new Game(playerCPU0, player1)
     while (testGame.isActive) {
       await testGame.step()
     }

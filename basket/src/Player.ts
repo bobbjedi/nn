@@ -38,7 +38,10 @@ export default class Player {
       // const res = this.brain.step(ndarray(input), this.predStepReward, false)
       // return res
     }
-    return isRnd ? rndStep(input) : this.brain.act(input)
+    // return isRnd ? rndStep(input) : this.brain.act(input)
+    const validActs = input.map((el, i) => el === .5 ? i : -1).filter(e => e !== -1)
+    // console.log(input, validActs)
+    return this.brain.act(input, validActs)
   }
   learn (reward: number) {
     if (this.isCPU) { return }

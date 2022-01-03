@@ -67,20 +67,13 @@ export default class Game {
 
   playerStep () {
     const player = this[('player' + this.nextStep.toString() as 'player0')]
-    let isOk = false
-    while (!isOk) {
-      const res = player.run(this.board)
-      if (this.board[res] !== 0.5) {
-        counters[player.brain.id].fail++
-        player.brain.violationRules(-3)
-      } else {
-        // player.learn(.1)
-        counters[player.brain.id].ok++
-        this.board[res] = this.nextStep
-        isOk = true
-        setVis(res, this.nextStep)
-      }
-    }
+
+    const res = player.run(this.board)
+
+    this.board[res] = this.nextStep
+
+    setVis(res, this.nextStep)
+
   }
 }
 
