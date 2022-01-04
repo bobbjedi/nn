@@ -246,7 +246,7 @@ var zeros = function (n) {
 }
 
 // Mat holds a matrix
-var Mat = function (n, d) {
+export const Mat = function (n, d) {
   // n is number of rows d is number of columns
   this.n = n
   this.d = d

@@ -1,11 +1,8 @@
 import { Agent } from './Agent'
 import { Item, Wall } from './envClasses'
-import A2A, { Spec } from './libs/A2A'
-import A2C from './libs/A2C'
+// import A2A, { Spec } from './libs/A2A'
+import FT, { Spec } from './libs/dqnFT'
 import DQNAgent from './libs/RL'
-import A2C_tfjs from './libs/a2cft'
-import A2C_b from './libs/a2cBrain'
-import br from './libs/dqnBrain'
 import { line_intersect, line_point_intersect, randf, randi, Vec } from './utills'
 
 export class World {
@@ -54,7 +51,8 @@ export class World {
       // a.brain = new A2C(agentSpec, criticSpec) // give agent a TD brain
       // a.brain = new A2C_b(agentSpec.statesCount, agentSpec.actionsCount) // give agent a TD brain
       // a.brain = (new A2A(a, agentSpec)) // give agent a TD brain
-      a.brain = new DQNAgent(a, agentSpec) // give agent a TD brain
+      // a.brain = new DQNAgent(a, agentSpec) // give agent a TD brain
+      a.brain = new FT(a, agentSpec) // give agent a TD brain
       console.log(a.brain)
       this.agents.push(a)
     }
