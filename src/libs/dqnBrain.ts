@@ -6,7 +6,8 @@ export default class A2CAgent {
   action_size: number
   value_size = 1
 
-  discount_factor = 0.99
+  bachSize = 50
+  discount_factor = 0.9
   actor_learningr = 0.001
   critic_learningr = 0.005
   discountRate = .9
@@ -15,7 +16,7 @@ export default class A2CAgent {
 
   pred_actions: number[]
   pred_state: number[]
-  pred_reward = 0
+  pred_reward = -100000
 
   isTrain = false
 
@@ -37,8 +38,9 @@ export default class A2CAgent {
     // create a simple feed forward neural network with backpropagation
     this.actor = new brain.NeuralNetwork({
       // inputSize: state_size,
-      hiddenLayers: [180, 180],
-      learningRate: 0.1,
+      hiddenLayers: [100],
+      learningRate: 0.01,
+      activation: 'tanh'
       // outputSize: action_size,
     })
     this.actor.train([{ input: convertSoftMax(state_size, 0, 1), output: convertSoftMax(action_size, 0, 1) }])
@@ -52,9 +54,10 @@ export default class A2CAgent {
   act (state: number[]) {
     // [state, action, reward, nextState]
     // this.memory.addSample([this.pred_state, softMax(this.pred_actions), this.pred_reward, state])
+    // this.pred_reward !== -100000 && this.memory.addSample([this.pred_state, softMax(this.pred_actions), this.pred_reward, state])
     this.pred_reward && this.memory.addSample([this.pred_state, softMax(this.pred_actions), this.pred_reward, state])
     this.pred_state = state
-    this.pred_actions = Math.random() > 0.1 ? this.actor.run(state) : convertSoftMax(this.action_size, rnd(0, this.action_size), Math.random())
+    this.pred_actions = Math.random() > 0.1 ? this.actor.run(state) : convertSoftMax(this.action_size, rnd(0, this.action_size - 1), Math.random())
     // console.log('PRED:', softMax(this.pred_actions))
     return softMax(this.pred_actions)
   }
@@ -65,7 +68,7 @@ export default class A2CAgent {
       return
     }
     this.isTrain = true
-    const batch = this.memory.sample(15)
+    const batch = this.memory.sample(this.bachSize)
     const states = batch.map(([state]) => state)
     const nextStates = batch.map(([, , , nextState]) => nextState ? nextState : zero(this.state_size))
     // Predict the values of each action at each state
@@ -84,13 +87,7 @@ export default class A2CAgent {
         y.push(currentQ)
       }
     )
-
-    // console.log('SET', x.map((input, i) => {
-    //   return {
-    //     input,
-    //     output: y[i]
-    //   } as Set
-    // }))
+    // console.log(x, y)
     // Learn the Q(s, a) values given associated discounted rewards
     const stat = await this.actor.trainAsync(x.map((input, i) => {
       return {
@@ -98,52 +95,9 @@ export default class A2CAgent {
         output: x[i]
       }
     }), { iterations: 5 })
-    console.log('Done', stat)
+    // console.log('Done', stat)
     this.isTrain = false
 
-    // if (!reward) { return }
-    // const target = convertSoftMax(this.value_size, 0, reward)
-    // const q = this.critic.run(this.pred_state.concat(this.pred_actions))[0]
-    // const advantages = convertSoftMax(this.action_size, softMax(this.pred_actions), q)
-
-    // const advantages = convertSoftMax(this.action_size, softMax(this.pred_actions), reward)
-
-    // this.savedAdvs.push(advantages)
-    // // this.savedTargets.push(target)
-    // this.savedStates.push(this.pred_state)
-    // this.savedStatesActions.push(this.pred_state.concat(this.pred_actions))
-
-    // if (reward !== 0) {
-    //   const act = softMax(this.pred_actions)
-    //   this.positiveActorSets.push({
-    //     acts: convertSoftMax(this.action_size, act, reward),
-    //     state: this.pred_state.slice()
-    //   })
-    // }
-
-    // if (this.isTrain || Math.random() > .1 || !this.positiveActorSets.length) {
-    //   return
-    // }
-    // this.isTrain = true
-    // // const dopArr = this.positiveActorSets.slice().splice(-50)
-
-    // const actorSet: Set[] = this.positiveActorSets.map(s => {
-    //   return {
-    //     input: s.state,
-    //     output: s.acts
-    //   }
-    // }).splice(-3)
-    // shuffle(this.positiveActorSets)
-    // // console.log('actorSet>', actorSet)
-    // const aLoss = await this.actor.trainAsync(actorSet, { iterations: 1 })
-    // // const cLoss = await this.critic.fit(tf.tensor2d(this.savedStatesActions), tf.tensor2d(this.savedTargets), { epochs: 2 })
-    // // console.log(aLoss.history.loss[0], cLoss.history.loss[0])
-    // console.log('Aloos', this.positiveActorSets.length, aLoss)
-    // this.savedAdvs = []
-    // this.savedTargets = []
-    // this.savedStates = []
-    // this.savedStatesActions = []
-    // this.isTrain = false
   }
 }
 type Set = {

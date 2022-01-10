@@ -1,7 +1,8 @@
 import Player from './Player'
 import Game from './Game'
 import DQNAgent from './ql'
-import A2A, { Spec } from '../../src/libs/A2A'
+// import A2A, { Spec } from '../../src/libs/A2A'
+import FT, { Spec } from '../../src/libs/dqnFT'
 import TFNQD from './tf_ql'
 
 import DQL from './DQL'
@@ -38,10 +39,11 @@ spec.num_hidden_units = 100 // number of neurons in hidden layer
 
 const agent0 = new DQNAgent(env, spec)
 spec.learning_steps_per_iteration = 50
-spec.num_hidden_layers = [150, 100] // number of neurons in hidden layer
+spec.num_hidden_layers = [64] // number of neurons in hidden layer
+spec.arch = 'lstm'
 const agent1 = new DQNAgent(env, spec)
 console.log(spec)
-const agentA2A = new A2A(env, spec)
+const agentA2A = new FT(env, spec, 0)
 // this.temporal_window = typeof opt.temporal_window !== 'undefined' ? opt.temporal_window : 1
 // this.experience_size = typeof opt.experience_size !== 'undefined' ? opt.experience_size : 30000
 // this.start_learn_threshold = typeof opt.start_learn_threshold !== 'undefined' ? opt.start_learn_threshold : Math.floor(Math.min(this.experience_size * 0.1, 1000))
@@ -134,7 +136,7 @@ const delay = () => new Promise(r => setTimeout(r, .1));
     // const p2 = !win_.isShow && !String(p1.brain.id).includes('CPU') && (Math.random() < .1) ? playerCPU0 : player1
     // win_.isShow && console.log(p1.brain.id, p2.brain.id)
     // const testGame = new Game(p1, p2)
-    const testGame = new Game(playerCPU0, player1)
+    const testGame = new Game(playerCPU0, playerA)
     while (testGame.isActive) {
       await testGame.step()
     }

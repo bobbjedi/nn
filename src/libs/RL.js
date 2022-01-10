@@ -1,15 +1,16 @@
 
-const DQNAgent = function (env, opt) {
-  this.gamma = getopt(opt, 'gamma', 0.75) // future reward discount factor
-  this.epsilon = getopt(opt, 'epsilon', 0.1) // for epsilon-greedy policy
-  this.alpha = getopt(opt, 'alpha', 0.01) // value function learning rate
+const DQNAgent = function (env, spec) {
+  this.arch = spec.arch || 'p' // 'p' | 'lstm'
+  this.gamma = getopt(spec, 'gamma', 0.75) // future reward discount factor
+  this.epsilon = getopt(spec, 'epsilon', 0.1) // for epsilon-greedy policy
+  this.alpha = getopt(spec, 'alpha', 0.01) // value function learning rate
 
-  this.experience_add_every = getopt(opt, 'experience_add_every', 25) // number of time steps before we add another experience to replay memory
-  this.experience_size = getopt(opt, 'experience_size', 5000) // size of experience replay
-  this.learning_steps_per_iteration = getopt(opt, 'learning_steps_per_iteration', 10)
-  this.tderror_clamp = getopt(opt, 'tderror_clamp', 1.0)
+  this.experience_add_every = getopt(spec, 'experience_add_every', 25) // number of time steps before we add another experience to replay memory
+  this.experience_size = getopt(spec, 'experience_size', 5000) // size of experience replay
+  this.learning_steps_per_iteration = getopt(spec, 'learning_steps_per_iteration', 10)
+  this.tderror_clamp = getopt(spec, 'tderror_clamp', 1.0)
 
-  this.num_hidden_layers = getopt(opt, 'num_hidden_layers', [100])
+  this.num_hidden_layers = getopt(spec, 'num_hidden_layers', [100])
 
   this.env = env
 
@@ -24,19 +25,20 @@ const DQNAgent = function (env, opt) {
 DQNAgent.prototype = {
   forwardQ (net, s, needs_backprop) {
     var G = new Graph(needs_backprop)
+    const amatOut = this.arch === 'p' ? forwardP(G, this.net, this.num_hidden_layers, s) : forwardLSTM(G, net, this.num_hidden_layers, s, this.s1)
 
-    let amat = G.add(G.mul(net.W1, s), net.b1)
-    let hmat = G.tanh(amat)
+    // let amat = G.add(G.mul(net.W1, s), net.b1)
+    // let hmat = G.tanh(amat)
 
-    this.num_hidden_layers.forEach((units, i) => {
-      if (!i) { return }
-      amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
-      hmat = G.tanh(amat)
-    })
-    const amatOut = G.add(G.mul(net.Wout, hmat), net.bout)
+    // this.num_hidden_layers.forEach((units, i) => {
+    //   if (!i) { return }
+    //   amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
+    //   hmat = G.tanh(amat)
+    // })
+    // const amatOut = G.add(G.mul(net.Wout, hmat), net.bout)
 
-    // this.lastG = G // back this up. Kind of hacky isn't it
     return { amatOut, G }
+
   },
   clearAct (slist, validActs) {
     return this.act_(slist, validActs, false)
@@ -139,31 +141,30 @@ DQNAgent.prototype = {
     return tderror
   },
   reset: function () {
-    this.num_hidden_layers.forEach((units, i) => this['nh' + i] = units)
     this.ns = this.env.getNumStates()
     this.na = this.env.getMaxNumActions()
 
     // nets are hardcoded for now as key (str) -> Mat
     // not proud of this. better solution is to have a whole Net object
     // on top of Mats, but for now sticking with this
-    this.net = {}
+    this.net = this.arch === 'p' ? initP(this.ns, this.num_hidden_layers, this.na) : initLSTM(this.ns, this.num_hidden_layers, this.na)
     // hidden layer
-    this.net.W1 = new RandMat(this.nh0, this.ns, 0, 0.01) // input = States count, output = Hidden Neurons count
-    this.net.b1 = new Mat(this.nh0, 1, 0, 0.01) // biases count = Hidden Neurons count
-    this.num_hidden_layers.forEach((units, i) => {
-      if (!i) { return }
-      const inp = this['nh' + (i - 1)] || this.ns
-      const out = this['nh' + i]
-      this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
-      this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
-    })
-    // this.net.W12 = new RandMat(this.nh2, this.nh1, 0, 0.01) // input = States count, output = Hidden Neurons count
-    // this.net.b12 = new Mat(this.nh2, 1, 0, 0.01) // biases count = Hidden Neurons count
-    // // output later
-    this.net.Wout = new RandMat(this.na, this['nh' + (this.num_hidden_layers.length - 1)], 0, 0.01) // input = Hidden Neurons count, output = Actions count
-    this.net.bout = new Mat(this.na, 1, 0, 0.01) // biases count = Actions count
+    // this.net.W1 = new RandMat(this.nh0, this.ns, 0, 0.01) // input = States count, output = Hidden Neurons count
+    // this.net.b1 = new Mat(this.nh0, 1, 0, 0.01) // biases count = Hidden Neurons count
+    // this.num_hidden_layers.forEach((units, i) => {
+    //   if (!i) { return }
+    //   const inp = this['nh' + (i - 1)] || this.ns
+    //   const out = this['nh' + i]
+    //   this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
+    //   this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
+    // })
+    // // this.net.W12 = new RandMat(this.nh2, this.nh1, 0, 0.01) // input = States count, output = Hidden Neurons count
+    // // this.net.b12 = new Mat(this.nh2, 1, 0, 0.01) // biases count = Hidden Neurons count
+    // // // output later
+    // this.net.Wout = new RandMat(this.na, this['nh' + (this.num_hidden_layers.length - 1)], 0, 0.01) // input = Hidden Neurons count, output = Actions count
+    // this.net.bout = new Mat(this.na, 1, 0, 0.01) // biases count = Actions count
 
-    console.log('NET', this.net)
+    console.log('NET', this.arch, this.net)
     this.exp = [] // experience
     this.expi = 0 // where to insert
 
@@ -633,7 +634,38 @@ Solver.prototype = {
   }
 }
 
-var initLSTM = function (input_size, hidden_sizes, output_size) {
+const initP = (input_size, hidden_sizes, output_size) => {
+  const net = {}
+  hidden_sizes.forEach((units, i) => net['nh' + i] = units)
+  // hidden layer
+  net.W1 = new RandMat(net.nh0, input_size, 0, 0.01) // input = States count, output = Hidden Neurons count
+  net.b1 = new Mat(net.nh0, 1, 0, 0.01) // biases count = Hidden Neurons count
+  hidden_sizes.forEach((units, i) => {
+    if (!i) { return }
+    const inp = this['nh' + (i - 1)] || input_size
+    const out = this['nh' + i]
+    this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
+    this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
+  })
+  // // output later
+  net.Wout = new RandMat(output_size, net['nh' + (hidden_sizes.length - 1)], 0, 0.01) // input = Hidden Neurons count, output = Actions count
+  net.bout = new Mat(output_size, 1, 0, 0.01) // biases count = Actions count
+  return net
+}
+
+const forwardP = (G, net, hidden_sizes, s) => {
+  let amat = G.add(G.mul(net.W1, s), net.b1)
+  let hmat = G.tanh(amat)
+
+  hidden_sizes.forEach((units, i) => {
+    if (!i) { return }
+    amat = G.add(G.mul(net['Wh' + i], hmat), net['bh' + i])
+    hmat = G.tanh(amat)
+  })
+  return G.add(G.mul(net.Wout, hmat), net.bout)
+}
+
+const initLSTM = (input_size, hidden_sizes, output_size) => {
   // hidden size should be a list
 
   var model = {}
@@ -659,16 +691,18 @@ var initLSTM = function (input_size, hidden_sizes, output_size) {
   // decoder params
   model['Whd'] = new RandMat(output_size, hidden_size, 0, 0.08)
   model['bd'] = new Mat(output_size, 1)
+  model.prev_lstm = null
   return model
 }
 
-var forwardLSTM = function (G, model, hidden_sizes, x, prev) {
+const forwardLSTM = (G, model, hidden_sizes, x) => {
   // forward prop for a single tick of LSTM
   // G is graph to append ops to
   // model contains LSTM parameters
   // x is 1D column vector with observation
   // prev is a struct containing hidden and cell
   // from previous iteration
+  const prev = model.prev_lstm
   let hidden_prevs = []
   let cell_prevs = []
   if (prev === null || typeof prev.h === 'undefined') {
@@ -725,7 +759,8 @@ var forwardLSTM = function (G, model, hidden_sizes, x, prev) {
   var output = G.add(G.mul(model['Whd'], hidden[hidden.length - 1]), model['bd'])
 
   // return cell memory, hidden representation and output
-  return { 'h': hidden, 'c': cell, 'o': output }
+  model.prev_lstm = { h: hidden, c: cell }
+  return output
 }
 
 var sig = function (x) {

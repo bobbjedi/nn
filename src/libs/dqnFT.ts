@@ -10,6 +10,7 @@ export default class FT {
   pred_a = -1
 
   constructor (env: Env, spec: Spec, countSet = 3) {
+    console.log('Spec:', spec)
     this.actor = new DQNAgent(env, spec)
     this.countSet = countSet
   }
@@ -54,6 +55,7 @@ export type Spec = {
   tderror_clamp: number // for robustness
   num_hidden_units: number // number of neurons in hidden layer
   num_hidden_layers?: number[] // number of neurons in hidden layer
+  arch?: 'p' | 'lstm'
 }
 export type Env = {
   getNumStates?: () => number
