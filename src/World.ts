@@ -53,7 +53,7 @@ export class World {
       // a.brain = new A2C_b(agentSpec.statesCount, agentSpec.actionsCount) // give agent a TD brain
       // a.brain = (new A2A(a, agentSpec)) // give agent a TD brain
       // a.brain = new DQNAgent(a, agentSpec) // give agent a TD brain
-      agentSpec.arch = 'lstm'
+      agentSpec.arch = 'p'
       a.brain = new FT(a, agentSpec, 3) // give agent a TD brain
       console.log('Br:', a.brain)
       this.agents.push(a)

@@ -642,10 +642,10 @@ const initP = (input_size, hidden_sizes, output_size) => {
   net.b1 = new Mat(net.nh0, 1, 0, 0.01) // biases count = Hidden Neurons count
   hidden_sizes.forEach((units, i) => {
     if (!i) { return }
-    const inp = this['nh' + (i - 1)] || input_size
-    const out = this['nh' + i]
-    this.net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
-    this.net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
+    const inp = net['nh' + (i - 1)] || input_size
+    const out = net['nh' + i]
+    net['Wh' + i] = new RandMat(out, inp, 0, 0.01) // input = States count, output = Hidden Neurons count
+    net['bh' + i] = new Mat(out, 1, 0, 0.01) // biases count = Hidden Neurons count
   })
   // // output later
   net.Wout = new RandMat(output_size, net['nh' + (hidden_sizes.length - 1)], 0, 0.01) // input = Hidden Neurons count, output = Actions count
